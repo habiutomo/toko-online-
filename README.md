@@ -102,15 +102,6 @@ MIT License — Bebas digunakan & dikembangkan.
 ⭐ Suka proyek ini?
 Silakan diberi star di GitHub agar makin banyak developer terbantu 😊
 
-yaml
-Salin kode
 
----
-
-Jika ingin, saya juga bisa:
-
-🔹 Buatkan **diagram alur transaksi / ERD**  
-🔹 Buatkan **postman collection**  
-🔹 Buatkan **API documentation (Swagger / Slate / HTML markdown)**
 
 
