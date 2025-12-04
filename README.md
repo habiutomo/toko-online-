@@ -99,8 +99,6 @@ Arsitektur service menjamin idempotensi & keamanan race condition saat update st
 📄 Lisensi
 MIT License — Bebas digunakan & dikembangkan.
 
-⭐ Suka proyek ini?
-Silakan diberi star di GitHub agar makin banyak developer terbantu 😊
 
 
 
