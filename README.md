@@ -1,38 +1,139 @@
-🛍️ Sistem Toko Online Sederhana - Backend LaravelProyek ini adalah implementasi backend untuk sistem toko online sederhana dengan fokus pada pemisahan peran dan pengelolaan stok yang transactional, serta alur kerja verifikasi pembayaran manual oleh Customer Service (CS).🚀 Fitur Utama Berdasarkan PeranPeranFitur KunciLogika BisnisAdminCRUD Produk (Input Tunggal), Impor Massal Produk via Excel.Mengelola data produk dan stok master.PembeliMelihat Produk, Keranjang Belanja, Checkout, Unggah Bukti Pembayaran.Pemantauan status pesanan.CS Layer 1Antrian Verifikasi Pembayaran, Konfirmasi Pembayaran.Mengurangi stok secara atomic setelah verifikasi berhasil. Meneruskan ke CS L2.CS Layer 2Antrian Pemrosesan Pesanan, Mencatat Nomor Resi, Memperbarui Status Pengiriman.Memastikan fulfillment pesanan yang stoknya sudah terpotong.SistemPembatalan Otomatis (Cron Job).Membatalkan pesanan yang belum dibayar/diverifikasi setelah 1x24 jam dan mengembalikan stok (jika status sudah processed sebelum dibatalkan).⚙️ Struktur Folder AplikasiProyek ini menggunakan pemisahan controller dan service yang ketat:app/
+# 🛍️ Sistem Toko Online Sederhana — Backend Laravel
+
+Proyek ini adalah implementasi **backend untuk sistem toko online sederhana** dengan fokus pada:
+
+- Pemisahan peran pengguna (Admin, Pembeli, CS Layer 1 & CS Layer 2)
+- Manajemen stok yang **transactional & atomic**
+- Alur kerja **manual payment verification oleh Customer Service**
+- **Pembatalan otomatis** pesanan lewat Cron Job
+
+---
+
+## 🚀 Fitur Utama Berdasarkan Peran
+
+| Peran         | Fitur Utama | Logika Bisnis |
+|--------------|-------------|---------------|
+| **Admin**     | CRUD Produk (Input tunggal), Impor massal via Excel | Menangani produk & stok master |
+| **Pembeli**   | Lihat produk, keranjang, checkout, unggah bukti pembayaran | Pemantauan status pesanan |
+| **CS Layer 1**| Antrian verifikasi pembayaran | Konfirmasi pembayaran → **stok dikurangi secara atomic** & diteruskan ke CS L2 |
+| **CS Layer 2**| Pemrosesan pesanan, input nomor resi, update status pengiriman | Fulfillment pesanan (stok telah terpotong) |
+| **Sistem**   | Pembatalan otomatis via Cron | Membatalkan pesanan belum dibayar / diverifikasi **1×24 jam** |
+
+---
+
+## ⚙️ Struktur Folder
+
+Proyek memakai arsitektur **Controller → Service → Model** untuk menjaga modularitas.
+
+app/
 ├── Console/
-│   └── Commands/
-│       └── CancelPendingOrders.php   # Command untuk Pembatalan Otomatis 1x24 jam
+│ └── Commands/
+│ └── CancelPendingOrders.php # Pembatalan otomatis 1×24 jam
 ├── Http/
-│   ├── Controllers/
-│   │   ├── Admin/                  # Controllers untuk Admin (CRUD/Import)
-│   │   ├── CustomerService/        # Controllers untuk CS L1 & CS L2
-│   │   └── Web/                    # Controllers untuk Pembeli (Shop, Cart, Order)
-│   ├── Requests/
-│   │   └── Admin/                  # Form Request untuk Validasi
-│   └── Middleware/
-│       └── RoleMiddleware.php      # Filter akses berdasarkan peran (admin, cs_l1, dll.)
-├── Models/                         # Model Eloquent (terhubung ke skema master/transactions)
+│ ├── Controllers/
+│ │ ├── Admin/ # CRUD + Import Excel
+│ │ ├── CustomerService/ # CS Layer 1 & 2
+│ │ └── Web/ # Pembeli (Shop, Cart, Order)
+│ ├── Requests/
+│ │ └── Admin/ # Validasi Form Admin
+│ └── Middleware/
+│ └── RoleMiddleware.php # Filter akses berdasarkan role
+├── Models/ # Model Eloquent
 ├── Services/
-│   └── OrderService.php            # CORE LOGIC: Pengurangan Stok & Pembatalan Transaksi
+│ └── OrderService.php # CORE: Logika stok & pembatalan
 └── Imports/
-    └── ProductsImport.php          # Class untuk memproses impor Excel (Maatwebsite/Excel)
-💾 Panduan Deployment1. PrasyaratPHP 8.2+ComposerPostgreSQL atau MariaDB/MySQLServer Web (Apache/Nginx) atau menggunakan php artisan serve2. Setup DatabaseProyek ini memerlukan pembuatan skema dan tabel di PostgreSQL.A. Skema PostgreSQL:Jika Anda menggunakan PostgreSQL, buat database dan jalankan script SQL yang telah disediakan:SQL-- Di database Anda
+└── ProductsImport.php # Import Excel (Maatwebsite/Excel)
+
+yaml
+Salin kode
+
+---
+
+## 💾 Panduan Deployment
+
+### 1️⃣ Prasyarat
+- PHP **8.2+**
+- Composer
+- PostgreSQL atau MariaDB/MySQL
+- Apache / Nginx atau `php artisan serve`
+
+### 2️⃣ Setup Database
+
+#### A. PostgreSQL (Direkomendasikan)
+```sql
 CREATE SCHEMA master;
 CREATE SCHEMA transactions;
--- ... Jalankan skrip CREATE TABLE untuk setiap skema.
-B. Konfigurasi .env:Salin file .env.example menjadi .env dan konfigurasikan koneksi database Anda.VariabelNilai Contoh (PostgreSQL)KeteranganDB_CONNECTIONpgsqlAtau mysql jika Anda menggunakan MariaDB/MySQLDB_HOST127.0.0.1DB_PORT5432Atau 3306 untuk MySQLDB_DATABASEecommerce_dbDB_USERNAMEpostgresDB_PASSWORDyour_secret_password3. Instalasi Laravel dan DependenciesJalankan perintah berikut di terminal proyek:Bash# Instal dependencies PHP
+-- Jalankan script CREATE TABLE sesuai skema
+B. Konfigurasi .env
+Variabel	Contoh	Keterangan
+DB_CONNECTION	pgsql	Atau mysql
+DB_HOST	127.0.0.1	—
+DB_PORT	5432	3306 untuk MySQL
+DB_DATABASE	ecommerce_db	—
+DB_USERNAME	postgres	—
+DB_PASSWORD	your_secret_password	—
+
+3️⃣ Instal Dependencies
+bash
+Salin kode
 composer install
-
-# Buat App Key
 php artisan key:generate
+# php artisan migrate   # jika tidak menggunakan SQL manual
+composer require maatwebsite/excel   # Opsional
+4️⃣ Setup Cron Job (WAJIB)
+Tambahkan scheduler Laravel agar pembatalan otomatis berjalan:
 
-# Jalankan Migrasi (untuk membuat tabel jika tidak menggunakan script SQL manual)
-# Catatan: Migrasi bawaan Laravel mungkin tidak otomatis membuat skema master/transactions.
-# Dianjurkan menggunakan script SQL yang disediakan.
-# php artisan migrate
-
-# [Opsional] Instal package Maatwebsite/Excel untuk Impor
-composer require maatwebsite/excel
-4. Setup Cron Job (Wajib untuk Pembatalan Otomatis)Untuk memastikan pesanan dibatalkan secara otomatis setelah 1x24 jam, Anda harus mengatur Cron Job sistem untuk menjalankan scheduler Laravel setiap menit:Bash# Tambahkan baris ini ke crontab
+bash
+Salin kode
 * * * * * cd /path-to-your-project && php artisan schedule:run >> /dev/null 2>&1
-🧑‍💻 Panduan Pengguna (User Guide)1. Akun Pengujian (Diasumsikan sudah di-seeded atau dimasukkan via SQL)RoleEmailPasswordAdminadmin@toko.compassword_hash_admin (Ganti dengan hash yang benar)CS Layer 1cs1@toko.compassword_hash_cs1CS Layer 2cs2@toko.compassword_hash_cs2Pembelipembeli@toko.compassword_hash_pembeli2. Alur Kerja Kritis (Transaksi dan Stok)Pembeli login dan melakukan Checkout.Status Order: pending_payment. Stok TIDAK berkurang.Pembeli mengunggah bukti pembayaran via formulir.Status Order: waiting_verification. Stok TIDAK berkurang.CS Layer 1 login dan memeriksa antrian verifikasi.CS L1 mengklik "Konfirmasi Pembayaran".Saat ini, fungsi OrderService::confirmPayment dipicu: Stok barang LANGSUNG DIKURANGI secara transactional.Status Order: processed. (Diteruskan ke CS L2).CS Layer 2 login dan melihat antrian processed.CS L2 memproses pesanan dan menginput nomor resi.Status Order: shipped.Gagal Bayar/Verifikasi: Jika pesanan tetap pending_payment atau waiting_verification selama 24 jam, Cron Job akan membatalkannya.Status Order: cancelled. Stok TIDAK perlu dikembalikan (karena belum terpotong).Pembatalan CS L1/L2 setelah diproses: Jika status sudah processed dan CS L1/L2 membatalkan, fungsi OrderService::cancelOrder akan mengembalikan stok ke master.products.
+🧑‍💻 Panduan Pengguna
+Akun Pengujian
+Role	Email	Password
+Admin	admin@toko.com	password_hash_admin
+CS Layer 1	cs1@toko.com	password_hash_cs1
+CS Layer 2	cs2@toko.com	password_hash_cs2
+Pembeli	pembeli@toko.com	password_hash_pembeli
+
+🔁 Alur Kerja Transaksi & Stok (Penting!)
+Pembeli checkout → status: pending_payment (stok belum berkurang)
+
+Pembeli upload bukti pembayaran → status: waiting_verification (stok belum berkurang)
+
+CS Layer 1 klik Konfirmasi Pembayaran
+→ OrderService::confirmPayment() dipicu
+→ stok berkurang transactional & atomic
+→ status: processed → diteruskan ke CS Layer 2
+
+CS Layer 2 memproses pesanan & input resi → status: shipped
+
+Pembatalan otomatis jika pending_payment / waiting_verification > 24 jam
+→ status: cancelled
+→ stok tidak perlu dikembalikan
+
+Jika pembatalan oleh CS setelah status processed
+→ OrderService::cancelOrder()
+→ stok dikembalikan ke master.products
+
+📌 Catatan Tambahan
+Sistem ini tidak mengurangi stok saat checkout, hanya setelah pembayaran diverifikasi oleh CS L1.
+
+Arsitektur service menjamin idempotensi & keamanan race condition saat update stok.
+
+📄 Lisensi
+MIT License — Bebas digunakan & dikembangkan.
+
+⭐ Suka proyek ini?
+Silakan diberi star di GitHub agar makin banyak developer terbantu 😊
+
+yaml
+Salin kode
+
+---
+
+Jika ingin, saya juga bisa:
+
+🔹 Buatkan **diagram alur transaksi / ERD**  
+🔹 Buatkan **postman collection**  
+🔹 Buatkan **API documentation (Swagger / Slate / HTML markdown)**
+
+Cukup bilang **"lanjutkan"** 🚀
