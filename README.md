@@ -21,31 +21,8 @@ Proyek ini adalah implementasi **backend untuk sistem toko online sederhana** de
 
 ---
 
-## ⚙️ Struktur Folder
 
-Proyek memakai arsitektur **Controller → Service → Model** untuk menjaga modularitas.
 
-app/
-├── Console/
-│ └── Commands/
-│ └── CancelPendingOrders.php # Pembatalan otomatis 1×24 jam
-├── Http/
-│ ├── Controllers/
-│ │ ├── Admin/ # CRUD + Import Excel
-│ │ ├── CustomerService/ # CS Layer 1 & 2
-│ │ └── Web/ # Pembeli (Shop, Cart, Order)
-│ ├── Requests/
-│ │ └── Admin/ # Validasi Form Admin
-│ └── Middleware/
-│ └── RoleMiddleware.php # Filter akses berdasarkan role
-├── Models/ # Model Eloquent
-├── Services/
-│ └── OrderService.php # CORE: Logika stok & pembatalan
-└── Imports/
-└── ProductsImport.php # Import Excel (Maatwebsite/Excel)
-
-yaml
-Salin kode
 
 ---
 
